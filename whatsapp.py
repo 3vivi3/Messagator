@@ -13,43 +13,48 @@ import time
 import threading
 import queue
 
+
+# initialisation 
+
 message_queue = queue.Queue()
-contact_translation=''
-source=''
-dest=''
 
-def get_messages(contact_name):
-    driver = webdriver.Chrome(executable_path="C:\\Users\\vibha\\Desktop\\DELL-VIBHA\\chromedriver.exe")
-    driver.maximize_window()
-    driver.get("https://web.whatsapp.com/")
-    time.sleep(30)
-    search_box = driver.find_element(By.XPATH, "//div[@title='Search input textbox']")
-    search_box.send_keys(contact_name)
+#GUI 
+def interface(message_queue): 
+    contact_translation=''
+    source=''
+    dest=''
     
-    wait = WebDriverWait(driver, 10)
-    contact_title = wait.until(EC.presence_of_element_located((By.XPATH, '//span[contains(@title,' +"'" + contact_name +"'"+ ')]')))
-    time.sleep(10)
-    contact_title.click()
-    time.sleep(10)
-    messages = driver.find_elements(By.XPATH, '//*[@id="main"]/div[2]/div')
+    def get_messages(contact_name):
+        driver = webdriver.Chrome(executable_path="C:\\Users\\vibha\\Desktop\\DELL-VIBHA\\chromedriver.exe") #opens chromedriver
+        driver.maximize_window()
+        driver.get("https://web.whatsapp.com/")  #opens whatsapp
+        time.sleep(30)
+
+        search_box = driver.find_element(By.XPATH, "//div[@title='Search input textbox']")
+        search_box.send_keys(contact_name)
+        
+        wait = WebDriverWait(driver, 10)
+        contact_title = wait.until(EC.presence_of_element_located((By.XPATH, '//span[contains(@title,' +"'" + contact_name +"'"+ ')]')))
+        time.sleep(10)
+        contact_title.click()
+        time.sleep(10)
+        messages = driver.find_elements(By.XPATH, '//*[@id="main"]/div[2]/div') #inspect
+        
+        #the output is in list, so convert it to a queue
+        for message in messages:
+            message_queue.put(message.text)
     
-    for message in messages:
-        message_queue.put(message.text)
-    # driver.close()
-
-def fetch_messages(contact):
-    message_thread = threading.Thread(target=get_messages, args=[contact])
-    message_thread.start()
-    message_thread.join()
-    messagebox.showinfo("Alert", "Messages from "+contact_translation+" have been extracted")
+    def fetch_messages(contact_name):
+        message_thread = threading.Thread(target=get_messages, args=[contact_name])
+        message_thread.start()
+        message_thread.join()
+        messagebox.showinfo("Alert", "Messages from "+contact_name+" have been extracted")
+        translate_text(source, dest)
 
 
-def interface(): 
-    global contact_translation
-    global source 
-    global dest
     root = Tk()
-    root.geometry('800x600')
+    root.title('Messagator - To translate your messages')
+    root.geometry('700x600')
 
     frame1=Frame(root,width=300,height=400,bg="cyan")
     frame2=Frame(root,width=300,height=400,bg="pink")
@@ -61,8 +66,6 @@ def interface():
     #frames
     frame1.grid(row=0,column=0,sticky="nsew")
     frame2.grid(row=0,column=1,sticky="nsew")
-
-    #frame3
     frame3.grid(row=1,column=0,rowspan=2,columnspan=2,sticky="new")
     frame4.grid(row=0,column=0,sticky="nsew")
     frame5.grid(row=0,column=1,sticky="nsew")
@@ -75,8 +78,8 @@ def interface():
     frame3.columnconfigure(1,weight=1)
 
     #text box
-    text_box1=Text(frame1,bg="light pink",fg="black",relief="solid")
-    text_box2=Text(frame2,bg="light yellow",fg="black",relief="solid")
+    text_box1=Text(frame1,bg="light blue",fg="black",relief="solid")
+    text_box2=Text(frame2,bg="light coral",fg="black",relief="solid")
     text_box1.grid(row=0,column=0,sticky="nsew")
     text_box2.grid(row=0,column=1,sticky="nsew")
     text_box1.rowconfigure(0,weight=1)
@@ -88,31 +91,33 @@ def interface():
     #button
     btn=Button(frame5,text="Fetch Messages",bg="light blue",relief='ridge',font=('Helvetica',10,'bold'), command= lambda: fetch_messages(contact_translation))
     btn.grid(row=1,column=0)
-    
+    textBox1 = Text(root)
+    textBox2 = Text(root)
+    #audio converter
     def convert_audio():
         text_info =  textBox2.get("1.0", "end-1c")
         myObj=gTTS(text=text_info,lang='hi',slow=False)               
         myObj.save('SpeechTest.mp3')
         os.system("SpeechTest.mp3")
-    photo=PhotoImage(file="C:/Users/vibha/Desktop/GSOP/Speaker.svg.png")
+    photo=PhotoImage(file="C:\\Users\\vibha\\Desktop\\GSOP\\Speaker.svg.png")
     speakerbtn=Button(frame5,image=photo, command=convert_audio)
     speakerbtn.grid(row=0,column=0,pady=15)
     
     
     def callback(*arg):
-        global contact_translation
+        nonlocal contact_translation
         contact_translation=box.get()
 
     #combo box1
     contact_combotext=tk.StringVar()
     contact_combotext.set('Type or enter Contact')
-    names=["Kara", "Vidhisha Gat", "Amodh"]
+    names=["X", "Y", "Z"]    
     box=ttk.Combobox(frame6, values=names, textvariable=contact_combotext)
     box.grid(row=0,column=0,sticky="nsew")  
     contact_combotext.trace('w', callback)
 
     def callback_source(*arg):
-        global source
+        nonlocal source
         source=sbox.get()
     
     #combo box2
@@ -128,7 +133,7 @@ def interface():
     source_language.trace('w', callback_source)  
 
     def callback_dest(*arg):
-        global dest
+        nonlocal dest
         dest=dbox.get()
         
     #combo box3
@@ -148,48 +153,41 @@ def interface():
     frame6.columnconfigure(1,weight=1)
     frame6.columnconfigure(2,weight=1)
 
-    #________________________________
-    textBox1 = Text(root)
-    textBox2 = Text(root)
-    lang_dict = {
-        "English": "en",
-        "Kannada": "ka",
-        "Hindi": "hi",
-        "French": "fr",
-        "Korean": "ko"
-    }
-
-    
-    #********************
-    textBox1.grid(row=0, column=0)
-    textBox1.tag_add("l1", "1.0", "1.50")
-    textBox1.tag_configure("l1",background = "white",foreground= "red")
-    textBox1.tag_add("l2", "2.0", "2.50")
-    textBox1.tag_configure("l2",foreground= "blue")
+    def translate_text(source, dest):
+        textBox1.grid(row=0, column=0)
+        textBox1.tag_add("l1", "1.0", "1.50")
+        textBox1.tag_configure("l1",background = "white",foreground= "red")
+        textBox1.tag_add("l2", "2.0", "2.50")
+        textBox1.tag_configure("l2",foreground= "blue")
 
 
-    textBox2.grid(row=0, column=1)
-    textBox2.tag_add("l1", "1.0", "1.50")
-    textBox2.tag_configure("l1",foreground= "red")
-    textBox2.tag_add("l2", "2.0", "2.50")
-    textBox2.tag_configure("l2",foreground= "blue")
+        textBox2.grid(row=0, column=1)
+        textBox2.tag_add("l1", "1.0", "1.50")
+        textBox2.tag_configure("l1",foreground= "red")
+        textBox2.tag_add("l2", "2.0", "2.50")
+        textBox2.tag_configure("l2",foreground= "blue")
 
-    while not message_queue.empty():
-        text = message_queue.get()
-        textBox1.insert(INSERT, text)
-        textTranslated = Translator().translate(text, src=lang_dict[source], dest=lang_dict[dest])
-        textBox2.insert(INSERT, textTranslated.text+"\n")
+        while not message_queue.empty():
+            #Languages 
+            lang_dict = {                                
+                "English": "en",
+                "Kannada": "kn",
+                "Hindi": "hi",
+                "French": "fr",
+                "Korean": "ko"
+            }
+            text = message_queue.get()
+            textBox1.insert(INSERT, text)
+            translator = Translator()
+            textTranslated = translator.translate(text, src=lang_dict[source], dest=lang_dict[dest])
+            textBox2.insert(INSERT, textTranslated.text+"\n")
 
     root.call('encoding', 'system', 'utf-8')
     root.mainloop()
 
 
-interface_thread = threading.Thread(target=interface, args=[])
-interface_thread.start()
-interface_thread.join()
+thread = threading.Thread(target=interface, args=[message_queue])
+thread.start()
+thread.join()
 
-if not message_queue.empty():
-    interface_thread2 = threading.Thread(target=interface, args=[])
-    interface_thread2.start()
-    interface_thread2.join()
 print("Terminating applicaton...")          
