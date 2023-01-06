@@ -1,4 +1,4 @@
 # Messagator
-Messagator is a project which comprises of two parts mainly, a social media platform (preferably Whatsapp) and a GUI where the messages are fetched and translated.
+Messagator is an application which provides a GUI to set parameters to fetch messages from Whatsapp and performs translation and Text to Speech operations on it.
 ## Flow Diagram 
 
